@@ -1,0 +1,12 @@
+{
+  "TTS_API": {
+    "VoiceVoxUrl": "http://127.0.0.1:50022",
+    "CoeiroLinkUrl": "http://127.0.0.1:50032",
+    "Retry": 10,
+    "RetryWaitingTime": 5000,
+    "SpeakerId": 46,
+    "SpeakerMode": 0,
+    "SpeakerUuid": "cb11bdbd-78fc-4f16-b528-a400bae1782d",
+    "SpeakerStyleId": 90
+  }
+}
