@@ -39,7 +39,7 @@ VOICEVOXとCOEIROINKをTTS Voice Wizardで使用できるにする簡単のASP.N
 3. （オプション）[COEIROINK](https://coeiroink.com/)を好きならばダウンロードします
 4. `ttssetting.json`中のセットを変更します  
    VOICEVOXのデフォルトポートは`50021`ですが、このサーバーのデフォルトポートは`50022`です  
-   VOICEVOXのフルバージョンを使用する場合は、デフォルトのポートまたは設定したポートに変更してください。
+   VOICEVOXのフルバージョンを使用する場合は、デフォルトのポートまたは設定したポートに変更してください
 5. TTS Voice Wizardの`Text To Speech Mode`を`Locally Hosted`に変更します
 
 ## 使用方法
@@ -54,6 +54,6 @@ VOICEVOXとCOEIROINKをTTS Voice Wizardで使用できるにする簡単のASP.N
   COEIROINKの場合は`curl 127.0.0.1:50032/v1/speakers`  
   簡単のスクリプトがありますけど、今は見つかったないです
 - `SpeakerMode`を変更し、VOICEVOXまたはCOEIROINKを選択します  
-`0` はVOICEVOXです  
-`1` はCOEIROINKです
+  `0` はVOICEVOXです  
+  `1` はCOEIROINKです
 
