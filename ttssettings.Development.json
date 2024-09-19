@@ -7,6 +7,9 @@
     "SpeakerId": 46,
     "SpeakerMode": 0,
     "SpeakerUuid": "cb11bdbd-78fc-4f16-b528-a400bae1782d",
-    "SpeakerStyleId": 90
+    "SpeakerStyleId": 90,
+    "TextReplace": {
+      "w": "笑"
+    }
   }
 }

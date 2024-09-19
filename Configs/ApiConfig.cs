@@ -12,4 +12,5 @@ public class ApiConfig
     public int SpeakerMode { get; init; } = -1;
     public string SpeakerUuid { get; init; } = string.Empty;
     public int SpeakerStyleId { get; init; } = -1;
+    public Dictionary<string, string> TextReplace { get; init; } = new();
 }

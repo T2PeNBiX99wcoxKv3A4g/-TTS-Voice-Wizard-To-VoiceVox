@@ -152,7 +152,8 @@ public class ApiController(ILogger<ApiController> logger, IOptions<ApiConfig> co
                         if (retryNow >= _configHelper.Config.Retry)
                             return Error(HttpStatusCode.InternalServerError,
                                 "Tried several times, still can't connect, please try again later.");
-                        logger.LogInformation("Retry after {waiting} seconds", _configHelper.Config.RetryWaitingTime / 1000);
+                        logger.LogInformation("Retry after {waiting} seconds",
+                            _configHelper.Config.RetryWaitingTime / 1000);
                         await Task.Delay(_configHelper.Config.RetryWaitingTime);
                         retryNow++;
                     }
@@ -233,9 +234,9 @@ public class ApiController(ILogger<ApiController> logger, IOptions<ApiConfig> co
                     try
                     {
                         var response2 = await Client.PostAsJsonAsync(url2, predict);
-                
+
                         logger.LogDebug("Status Code 2 {StatusCode}", response2.StatusCode);
-                
+
                         if (response2.StatusCode != HttpStatusCode.OK)
                             return await ErrorHandle(response2);
                         return Ok(Convert.ToBase64String(await response2.Content.ReadAsByteArrayAsync()));
@@ -243,11 +244,12 @@ public class ApiController(ILogger<ApiController> logger, IOptions<ApiConfig> co
                     catch (HttpRequestException ex)
                     {
                         logger.LogError("Server Error: {msg}", ex.Message);
-                
+
                         if (retryNow >= _configHelper.Config.Retry)
                             return Error(HttpStatusCode.InternalServerError,
                                 "Tried several times, still can't connect, please try again later.");
-                        logger.LogInformation("Retry after {waiting} seconds", _configHelper.Config.RetryWaitingTime / 1000);
+                        logger.LogInformation("Retry after {waiting} seconds",
+                            _configHelper.Config.RetryWaitingTime / 1000);
                         await Task.Delay(_configHelper.Config.RetryWaitingTime);
                         retryNow++;
                     }
@@ -284,6 +286,21 @@ public class ApiController(ILogger<ApiController> logger, IOptions<ApiConfig> co
         logger.LogDebug("Synthesize Text: {text}", text);
 
         ObjectResult ret;
+        var newText = "";
+
+        // ReSharper disable AccessToModifiedClosure
+        foreach (var textReplace in from textReplace in _configHelper.Config.TextReplace
+                 where text.Contains(textReplace.Key)
+                 let index = text.IndexOf(textReplace.Key, StringComparison.OrdinalIgnoreCase)
+                 where text.IndexOf(textReplace.Key, index + 1, StringComparison.OrdinalIgnoreCase) >= 0
+                 select textReplace)
+        {
+            newText = text.Replace(textReplace.Key, textReplace.Value);
+        }
+        // ReSharper restore AccessToModifiedClosure
+
+        if (!string.IsNullOrWhiteSpace(newText))
+            text = newText;
 
         if (_configHelper.Settings.SpeakerMode == 1)
             ret = await CoeiroLinkPost(text);
