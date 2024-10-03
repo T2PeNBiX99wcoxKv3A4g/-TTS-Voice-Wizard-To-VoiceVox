@@ -95,24 +95,47 @@ public class ApiController(ILogger<ApiController> logger, IOptions<ApiConfig> co
         });
     }
 
-    private async Task<ObjectResult> VoiceVoxPost(string text)
+    private async Task<ObjectResult> TryTweVoiceVoxPost(string url, string json)
     {
-        var url = _configHelper.Config.VoiceVoxUrl + "/audio_query";
         var retryNow = 0;
-
-        var query = new Dictionary<string, string?>
-        {
-            ["speaker"] = _configHelper.Settings.SpeakerId.ToString(),
-            ["text"] = text
-        };
-
-        var newUrl = QueryHelpers.AddQueryString(url, query);
-
+        
         while (true)
         {
             try
             {
-                var response = await Client.PostAsync(newUrl, null);
+                var response2 = await Client.PostAsync(url,
+                    new StringContent(json, Encoding.UTF8, "application/json"));
+
+                logger.LogDebug("Status Code 2 {StatusCode}", response2.StatusCode);
+
+                if (response2.StatusCode != HttpStatusCode.OK)
+                    return await ErrorHandle(response2);
+                return Ok(Convert.ToBase64String(await response2.Content.ReadAsByteArrayAsync()));
+            }
+            catch (HttpRequestException ex)
+            {
+                logger.LogError("Server Error: {Stack}", ex.Message);
+
+                if (retryNow >= _configHelper.Config.Retry)
+                    return Error(HttpStatusCode.InternalServerError,
+                        "Tried several times, still can't connect, please try again later.");
+                logger.LogInformation("Retry after {waiting} seconds",
+                    _configHelper.Config.RetryWaitingTime / 1000);
+                await Task.Delay(_configHelper.Config.RetryWaitingTime);
+                retryNow++;
+            }
+        }
+    }
+
+    private async Task<ObjectResult> TryOneVoiceVoxPost(string url)
+    {
+        var retryNow = 0;
+        
+        while (true)
+        {
+            try
+            {
+                var response = await Client.PostAsync(url, null);
 
                 logger.LogDebug("Status Code {StatusCode}", response.StatusCode);
 
@@ -132,32 +155,7 @@ public class ApiController(ILogger<ApiController> logger, IOptions<ApiConfig> co
 
                 var newUrl2 = QueryHelpers.AddQueryString(url2, query2);
 
-                while (true)
-                {
-                    try
-                    {
-                        var response2 = await Client.PostAsync(newUrl2,
-                            new StringContent(json, Encoding.UTF8, "application/json"));
-
-                        logger.LogDebug("Status Code 2 {StatusCode}", response2.StatusCode);
-
-                        if (response2.StatusCode != HttpStatusCode.OK)
-                            return await ErrorHandle(response2);
-                        return Ok(Convert.ToBase64String(await response2.Content.ReadAsByteArrayAsync()));
-                    }
-                    catch (HttpRequestException ex)
-                    {
-                        logger.LogError("Server Error: {Stack}", ex.Message);
-
-                        if (retryNow >= _configHelper.Config.Retry)
-                            return Error(HttpStatusCode.InternalServerError,
-                                "Tried several times, still can't connect, please try again later.");
-                        logger.LogInformation("Retry after {waiting} seconds",
-                            _configHelper.Config.RetryWaitingTime / 1000);
-                        await Task.Delay(_configHelper.Config.RetryWaitingTime);
-                        retryNow++;
-                    }
-                }
+                return await TryTweVoiceVoxPost(newUrl2, json);
             }
             catch (HttpRequestException ex)
             {
@@ -173,16 +171,54 @@ public class ApiController(ILogger<ApiController> logger, IOptions<ApiConfig> co
         }
     }
 
-    private async Task<ObjectResult> CoeiroLinkPost(string text)
+    private async Task<ObjectResult> VoiceVoxPost(string text)
     {
-        var url = _configHelper.Config.CoeiroLinkUrl + "/v1/estimate_prosody";
-        var retryNow = 0;
-
-        var json = new TextData
+        var url = _configHelper.Config.VoiceVoxUrl + "/audio_query";
+        var query = new Dictionary<string, string?>
         {
-            Text = text
+            ["speaker"] = _configHelper.Settings.SpeakerId.ToString(),
+            ["text"] = text
         };
+        var newUrl = QueryHelpers.AddQueryString(url, query);
 
+        return await TryOneVoiceVoxPost(newUrl);
+    }
+
+    private async Task<ObjectResult> TryTweCoeiroLinkPost(string url, Predict predict)
+    {
+        var retryNow = 0;
+        
+        while (true)
+        {
+            try
+            {
+                var response2 = await Client.PostAsJsonAsync(url, predict);
+
+                logger.LogDebug("Status Code 2 {StatusCode}", response2.StatusCode);
+
+                if (response2.StatusCode != HttpStatusCode.OK)
+                    return await ErrorHandle(response2);
+                return Ok(Convert.ToBase64String(await response2.Content.ReadAsByteArrayAsync()));
+            }
+            catch (HttpRequestException ex)
+            {
+                logger.LogError("Server Error: {msg}", ex.Message);
+
+                if (retryNow >= _configHelper.Config.Retry)
+                    return Error(HttpStatusCode.InternalServerError,
+                        "Tried several times, still can't connect, please try again later.");
+                logger.LogInformation("Retry after {waiting} seconds",
+                    _configHelper.Config.RetryWaitingTime / 1000);
+                await Task.Delay(_configHelper.Config.RetryWaitingTime);
+                retryNow++;
+            }
+        }
+    }
+
+    private async Task<ObjectResult> TryOneCoeiroLinkPost(string url, TextData json, string text)
+    {
+        var retryNow = 0;
+        
         while (true)
         {
             try
@@ -229,31 +265,7 @@ public class ApiController(ILogger<ApiController> logger, IOptions<ApiConfig> co
 
                 var url2 = _configHelper.Config.CoeiroLinkUrl + "/v1/predict";
 
-                while (true)
-                {
-                    try
-                    {
-                        var response2 = await Client.PostAsJsonAsync(url2, predict);
-
-                        logger.LogDebug("Status Code 2 {StatusCode}", response2.StatusCode);
-
-                        if (response2.StatusCode != HttpStatusCode.OK)
-                            return await ErrorHandle(response2);
-                        return Ok(Convert.ToBase64String(await response2.Content.ReadAsByteArrayAsync()));
-                    }
-                    catch (HttpRequestException ex)
-                    {
-                        logger.LogError("Server Error: {msg}", ex.Message);
-
-                        if (retryNow >= _configHelper.Config.Retry)
-                            return Error(HttpStatusCode.InternalServerError,
-                                "Tried several times, still can't connect, please try again later.");
-                        logger.LogInformation("Retry after {waiting} seconds",
-                            _configHelper.Config.RetryWaitingTime / 1000);
-                        await Task.Delay(_configHelper.Config.RetryWaitingTime);
-                        retryNow++;
-                    }
-                }
+                return await TryTweCoeiroLinkPost(url2, predict);
             }
             catch (HttpRequestException ex)
             {
@@ -267,6 +279,17 @@ public class ApiController(ILogger<ApiController> logger, IOptions<ApiConfig> co
                 retryNow++;
             }
         }
+    }
+
+    private async Task<ObjectResult> CoeiroLinkPost(string text)
+    {
+        var url = _configHelper.Config.CoeiroLinkUrl + "/v1/estimate_prosody";
+        var json = new TextData
+        {
+            Text = text
+        };
+
+        return await TryOneCoeiroLinkPost(url, json, text);
     }
 
     // ReSharper disable once StringLiteralTypo
