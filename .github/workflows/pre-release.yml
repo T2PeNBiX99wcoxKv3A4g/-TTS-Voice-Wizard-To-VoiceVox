@@ -12,12 +12,12 @@ jobs:
     steps:
       - name: Check-out repository
         uses: actions/checkout@v4
-          
+
       - name: Setup .Net Core
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.0'
-          
+
       - name: Build Executable
         run: dotnet build --configuration Release
 
@@ -42,6 +42,8 @@ jobs:
   
   upload:
     name: Create Pre Release
+    permissions:
+      contents: write
     needs: [ windows-release-build ]
     runs-on: ubuntu-latest
     steps:
