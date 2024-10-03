@@ -1,0 +1,65 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  windows-release-build:
+    name: Windows Latest Build
+    runs-on: windows-latest
+    steps:
+      - name: Check-out repository
+        uses: actions/checkout@v4
+
+      - name: Setup .Net Core
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0'
+
+      - name: Build Executable
+        run: dotnet build --configuration Release
+
+      - name: Copy Html Files
+        run: |
+          Copy-Item -Path "wwwroot" -Destination "bin/Release/net8.0" -Recurse
+          Copy-Item -Path "Views" -Destination "bin/Release/net8.0" -Recurse
+
+      - name: Create Archive
+        uses: thedoctor0/zip-release@0.7.6
+        with:
+          type: 'zip'
+          filename: 'TTSToVOICEVOX.zip'
+          exclusions: '*.git* /*node_modules/* .editorconfig'
+          directory: bin/Release/net8.0
+
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-windows
+          path: bin/Release/net8.0/TTSToVOICEVOX.zip
+  
+  upload:
+    name: Create Release
+    needs: [ windows-release-build ]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download Build Artifacts
+        uses: actions/download-artifact@v4
+
+      - name: Bump version and push tag
+        id: tag_version
+        uses: mathieudutour/github-tag-action@v6.2
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          pre_release_branches: "fast"
+
+      - name: Create Release
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: "release-windows/TTSToVOICEVOX.zip"
+          token: ${{ secrets.GITHUB_TOKEN }}
+          tag: ${{ steps.tag_version.outputs.new_tag }}
+          name: Release ${{ steps.tag_version.outputs.new_tag }}
+          body: ${{ steps.tag_version.outputs.changelog }}
