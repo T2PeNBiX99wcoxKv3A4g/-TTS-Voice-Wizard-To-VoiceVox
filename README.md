@@ -29,7 +29,7 @@ Simple ASP.NET Server make VOICEVOX or COEIROINK can work in TTS Voice Wizard
   `1` is COEIROINK
 
 ---
-VOICEVOXとCOEIROINKをTTS Voice Wizardで使用できるにする簡単のASP.NETサーバー
+VOICEVOXとCOEIROINKをTTS Voice Wizardで使用できるにするため簡単のASP.NETサーバー
 
 ## セットアップ方法
 
@@ -40,12 +40,12 @@ VOICEVOXとCOEIROINKをTTS Voice Wizardで使用できるにする簡単のASP.N
 4. `ttssetting.json`中のセットを変更します  
    VOICEVOXのデフォルトポートは`50021`ですが、このサーバーのデフォルトポートは`50022`です  
    VOICEVOXのフルバージョンを使用する場合は、デフォルトのポートまたは設定したポートに変更してください
-5. TTS Voice Wizardの`Text To Speech Mode`を`Locally Hosted`に変更します
+5. TTS Voice Wizardの`Text To Speech Mode`を`Locally Hosted`に変更してください
 
 ## 使用方法
 
 - 詳しくは [http://localhost:8124/docs](http://localhost:8124/docs) へ
-- このサーバーを閉じずに`speakers`を変更したい場合は、http postを http://localhost:8124/settings
+- このサーバーを閉じずに`speakers`を変更したい場合は、`Http Post`を http://localhost:8124/settings
   に送って変更してください  
   サンプル
   `curl 127.0.0.1:8124/settings -H "Content-Type: application/json" -d '{"speaker_id":46,"speaker_mode":0,"speaker_uuid":"cb11bdbd-78fc-4f16-b528-a400bae1782d","speaker_style_id":90}'`  
